@@ -1,0 +1,5 @@
+.metals
+.vscode
+.idea
+.env
+**/.env

@@ -1,0 +1,13 @@
+.idea
+.vscode
+kafka-examples/.classpath
+kafka-examples/.project
+kafka-examples/.vscode
+kafka-examples/.settings
+kafka-examples/target
+**/*.iml
+target
+.classpath
+.settings
+.project
+.env

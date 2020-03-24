@@ -1,5 +1,6 @@
 package com.github.farrellw;
 
+import io.github.cdimascio.dotenv.Dotenv;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
@@ -16,16 +17,16 @@ public class Consumer {
     public static void main(String[] args) {
         Logger logger =  LoggerFactory.getLogger(Consumer.class.getName());
 
-//        String bootstrapServer = "127.0.0.1:9092";
-         String gcpBootstrapServer = "35.208.65.122:9092";
-        String topic = "covid-tweets";
+        Dotenv dotenv = Dotenv.load();
+        String gcpBootstrapServer = dotenv.get("BOOTSTRAP_SERVER");
+        String topic = "reviews";
 
         Properties properties = new Properties();
         properties.setProperty(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, gcpBootstrapServer);
         properties.setProperty(ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
         properties.setProperty(ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG, StringDeserializer.class.getName());
-        properties.setProperty(ConsumerConfig.GROUP_ID_CONFIG, "my-first-application");
-//        properties.setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
+        properties.setProperty(ConsumerConfig.GROUP_ID_CONFIG, "consumer-application-id");
+        properties.setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
 
         // create consumer
         KafkaConsumer<String, String> consumer = new KafkaConsumer<String, String>(properties);

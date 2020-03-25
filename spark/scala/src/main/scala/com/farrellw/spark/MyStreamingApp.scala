@@ -40,6 +40,7 @@ object MyStreamingApp {
         .format("kafka")
         .option("kafka.bootstrap.servers", bootstrapServers)
         .option("subscribe", "reviews")
+        .option("startingOffsets", "earliest")
         .load()
         .selectExpr("CAST(value AS STRING)")
 

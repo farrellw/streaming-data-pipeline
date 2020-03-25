@@ -16,7 +16,7 @@ import org.apache.kafka.common.serialization.StringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-// TODO adjust producer to produce records to the reviews topic
+// TODO adjust producer to produce records to the reviews topic ( Need to find the review data structure )
 public class Producer {
 
     public static void main(String[] args) throws JsonProcessingException {

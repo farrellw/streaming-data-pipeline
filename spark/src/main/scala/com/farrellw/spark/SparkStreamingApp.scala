@@ -1,9 +1,6 @@
 package com.farrellw.spark
 
-import com.farrellw.spark.models.{Customer, EnrichedReview, WrappedReview}
-import org.apache.hadoop.hbase.client.{ConnectionFactory, Get}
-import org.apache.hadoop.hbase.util.Bytes
-import org.apache.hadoop.hbase.{HBaseConfiguration, TableName}
+import com.farrellw.spark.models.WrappedReview
 import org.apache.log4j.Logger
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.streaming.{OutputMode, Trigger}
@@ -17,8 +14,6 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
  */
 object SparkStreamingApp {
   lazy val logger: Logger = Logger.getLogger(this.getClass)
-  implicit def stringToBytes(str: String): Array[Byte] = Bytes.toBytes(str)
-  implicit def bytesToString(bytes: Array[Byte]): String = Bytes.toString(bytes)
 
   val jobName = "SparkStreamingApp"
   val schema: StructType = new StructType()
@@ -43,7 +38,7 @@ object SparkStreamingApp {
       val spark = SparkSession.builder().appName(jobName).master("local[*]").getOrCreate()
       val bootstrapServers = args(0)
 
-      // Lines 50 and 51 are left in to debug
+      // Lines 48 and 49 are left in to debug
       // if data is not currently being published to the Kafka topic.
       val df = spark
         .readStream
@@ -62,31 +57,7 @@ object SparkStreamingApp {
       import spark.implicits._
       val structured = parsed.as[WrappedReview].map(_.js)
 
-      val newRd = structured.mapPartitions(partition => {
-        val conf = HBaseConfiguration.create()
-        conf.set("hbase.zookeeper.quorum", "35.184.255.239")
-
-        // TODO switch and use a connection pool
-        val connection = ConnectionFactory.createConnection(conf)
-
-        val table = connection.getTable(TableName.valueOf("kit:users"))
-
-        val newPartition = partition.map(r => {
-          val get = new Get(r.customer_id.toString).addFamily("f1")
-          val result = table.get(get)
-          val name = result.getValue("f1", "name")
-          val birthdate = result.getValue("f1", "birthdate")
-          val mail = result.getValue("f1","mail")
-          val sex = result.getValue("f1", "sex")
-          val username = result.getValue("f1", "username")
-          EnrichedReview(r, Customer(name, birthdate, mail, sex, username))
-        }).toList //Collect the partition on its own machine before closing the hbase connection
-
-        connection.close()
-        newPartition.iterator
-      })
-
-      val query = newRd.writeStream
+      val query = structured.writeStream
         .outputMode(OutputMode.Append())
         .format("console")
         .trigger(Trigger.ProcessingTime("5 seconds"))

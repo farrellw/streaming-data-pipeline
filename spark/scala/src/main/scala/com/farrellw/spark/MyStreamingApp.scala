@@ -1,5 +1,9 @@
 package com.farrellw.spark
 
+import com.farrellw.spark.models.{Customer, EnrichedReview, WrappedReview}
+import org.apache.hadoop.hbase.client.{ConnectionFactory, Get}
+import org.apache.hadoop.hbase.util.Bytes
+import org.apache.hadoop.hbase.{HBaseConfiguration, TableName}
 import org.apache.log4j.Logger
 import org.apache.spark.sql.functions._
 import org.apache.spark.sql.streaming.{OutputMode, Trigger}
@@ -13,6 +17,9 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
  */
 object MyStreamingApp {
   lazy val logger: Logger = Logger.getLogger(this.getClass)
+  implicit def stringToBytes(str: String): Array[Byte] = Bytes.toBytes(str)
+  implicit def bytesToString(bytes: Array[Byte]): String = Bytes.toString(bytes)
+
   val jobName = "MyStreamingApp"
   val schema: StructType = new StructType()
     .add("marketplace", StringType, nullable = true)
@@ -41,15 +48,42 @@ object MyStreamingApp {
         .option("kafka.bootstrap.servers", bootstrapServers)
         .option("subscribe", "reviews")
         .option("startingOffsets", "earliest")
+        .option("maxOffsetsPerTrigger", "100")
         .load()
         .selectExpr("CAST(value AS STRING)")
 
       df.printSchema()
 
-      val out = compute(df)
+      val parsed = compute(df)
 
-      val query = out.writeStream
-        .outputMode(OutputMode.Complete())
+      import spark.implicits._
+      val structured = parsed.as[WrappedReview].map(_.js)
+
+      val newRd = structured.mapPartitions(partition => {
+        val conf = HBaseConfiguration.create()
+        conf.set("hbase.zookeeper.quorum", "35.184.255.239")
+
+        val connection = ConnectionFactory.createConnection(conf)
+
+        val table = connection.getTable(TableName.valueOf("kit:users"))
+
+        val newPartition = partition.map(r => {
+          val get = new Get(r.customer_id.toString).addFamily("f1")
+          val result = table.get(get)
+          val name = result.getValue("f1", "name")
+          val birthdate = result.getValue("f1", "birthdate")
+          val mail = result.getValue("f1","mail")
+          val sex = result.getValue("f1", "sex")
+          val username = result.getValue("f1", "username")
+          EnrichedReview(r, Customer(name, birthdate, mail, sex, username))
+        }).toList
+
+        connection.close() // close dbconnection here
+        newPartition.iterator
+      })
+
+      val query = newRd.writeStream
+        .outputMode(OutputMode.Append())
         .format("console")
         .trigger(Trigger.ProcessingTime("5 seconds"))
         .start()
@@ -62,6 +96,5 @@ object MyStreamingApp {
 
   def compute(df: DataFrame): DataFrame = {
     df.select(from_json(df("value"), schema) as "js")
-      .agg(round(avg("js.star_rating"), 2) as "avg_star_rating")
   }
 }

@@ -15,12 +15,12 @@ import org.apache.spark.sql.{DataFrame, SparkSession}
  *
  * Takes one argument, for Kafka bootstrap servers (ex: localhost:9092)
  */
-object MyStreamingApp {
+object SparkStreamingApp {
   lazy val logger: Logger = Logger.getLogger(this.getClass)
   implicit def stringToBytes(str: String): Array[Byte] = Bytes.toBytes(str)
   implicit def bytesToString(bytes: Array[Byte]): String = Bytes.toString(bytes)
 
-  val jobName = "MyStreamingApp"
+  val jobName = "SparkStreamingApp"
   val schema: StructType = new StructType()
     .add("marketplace", StringType, nullable = true)
     .add("customer_id", IntegerType, nullable = true)

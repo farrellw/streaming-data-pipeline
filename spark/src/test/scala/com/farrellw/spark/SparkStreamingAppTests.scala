@@ -3,7 +3,7 @@ package com.farrellw.spark
 import com.holdenkarau.spark.testing.DataFrameSuiteBase
 import org.scalatest.FunSuite
 
-class MyStreamingAppTests extends FunSuite with DataFrameSuiteBase {
+class SparkStreamingAppTests extends FunSuite with DataFrameSuiteBase {
   import sqlContext.implicits._
 
   test("should parse json") {
@@ -16,7 +16,7 @@ class MyStreamingAppTests extends FunSuite with DataFrameSuiteBase {
     )).toDF("value")
 
     val expected = sc.parallelize(List(Some(3.67))).toDF("avg_star_rating")
-    val actual = MyStreamingApp.compute(input)
+    val actual = SparkStreamingApp.compute(input)
     actual.printSchema()
     actual.show()
     assertDataFrameEquals(actual, expected) // equal

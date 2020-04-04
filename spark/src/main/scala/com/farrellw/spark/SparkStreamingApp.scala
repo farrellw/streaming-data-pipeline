@@ -42,13 +42,16 @@ object SparkStreamingApp {
     try {
       val spark = SparkSession.builder().appName(jobName).master("local[*]").getOrCreate()
       val bootstrapServers = args(0)
+
+      // Lines 50 and 51 are left in to debug
+      // if data is not currently being published to the Kafka topic.
       val df = spark
         .readStream
         .format("kafka")
         .option("kafka.bootstrap.servers", bootstrapServers)
         .option("subscribe", "reviews")
         .option("startingOffsets", "earliest")
-        .option("maxOffsetsPerTrigger", "100")
+        .option("maxOffsetsPerTrigger", "200")
         .load()
         .selectExpr("CAST(value AS STRING)")
 
@@ -63,6 +66,7 @@ object SparkStreamingApp {
         val conf = HBaseConfiguration.create()
         conf.set("hbase.zookeeper.quorum", "35.184.255.239")
 
+        // TODO switch and use a connection pool
         val connection = ConnectionFactory.createConnection(conf)
 
         val table = connection.getTable(TableName.valueOf("kit:users"))
@@ -76,9 +80,9 @@ object SparkStreamingApp {
           val sex = result.getValue("f1", "sex")
           val username = result.getValue("f1", "username")
           EnrichedReview(r, Customer(name, birthdate, mail, sex, username))
-        }).toList
+        }).toList //Collect the partition on its own machine before closing the hbase connection
 
-        connection.close() // close dbconnection here
+        connection.close()
         newPartition.iterator
       })
 

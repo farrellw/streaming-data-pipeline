@@ -43,6 +43,7 @@ object SparkStreamingApp {
       val spark = SparkSession.builder().appName(jobName).master("local[*]").getOrCreate()
       val bootstrapServers = args(0)
 
+
       // Lines 50 and 51 are left in to debug
       // if data is not currently being published to the Kafka topic.
       val df = spark
@@ -62,7 +63,7 @@ object SparkStreamingApp {
       import spark.implicits._
       val structured = parsed.as[WrappedReview].map(_.js)
 
-      val newRd = structured.mapPartitions(partition => {
+      val newRdd = structured.mapPartitions(partition => {
         val conf = HBaseConfiguration.create()
         conf.set("hbase.zookeeper.quorum", "35.184.255.239")
 
@@ -82,13 +83,15 @@ object SparkStreamingApp {
           EnrichedReview(r, Customer(name, birthdate, mail, sex, username))
         }).toList //Collect the partition on its own machine before closing the hbase connection
 
+
         connection.close()
         newPartition.iterator
       })
 
-      val query = newRd.writeStream
+      val query = newRdd.writeStream
         .outputMode(OutputMode.Append())
-        .format("console")
+        .format("parquet")
+        .option("path", "hdfs://35.184.255.239:8888/user/will")
         .trigger(Trigger.ProcessingTime("5 seconds"))
         .start()
 

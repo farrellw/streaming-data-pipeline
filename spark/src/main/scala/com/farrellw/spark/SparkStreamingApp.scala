@@ -90,8 +90,7 @@ object SparkStreamingApp {
 
       val query = newRdd.writeStream
         .outputMode(OutputMode.Append())
-        .format("parquet")
-        .option("path", "hdfs://35.184.255.239:8888/user/will")
+        .format("console")
         .trigger(Trigger.ProcessingTime("5 seconds"))
         .start()
 

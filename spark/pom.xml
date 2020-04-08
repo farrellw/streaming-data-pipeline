@@ -126,12 +126,6 @@
             <artifactId>spark-sql-kafka-0-10_${scala.compat.version}</artifactId>
             <version>${spark.version}</version>
         </dependency>
-        <!-- HBase dependencies -->
-        <!-- https://mvnrepository.com/artifact/com.hortonworks/shc-core -->
-<!--        <dependency>-->
-<!--            <groupId>com.hortonworks</groupId>-->
-<!--            <artifactId>shc-core</artifactId>-->
-<!--        </dependency>-->
         <dependency>
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-client</artifactId>

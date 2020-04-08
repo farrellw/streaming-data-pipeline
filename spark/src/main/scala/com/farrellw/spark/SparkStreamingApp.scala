@@ -40,9 +40,8 @@ object SparkStreamingApp {
 
   def main(args: Array[String]): Unit = {
     try {
-      val spark = SparkSession.builder().appName(jobName).master("local[*]").getOrCreate()
-      spark.conf.set("spark.hadoop.dfs.client.use.datanode.hostname", "true")
-      spark.conf.set("spark.hadoop.fs.defaultFS", "hdfs://quickstart.cloudera:8020")
+      val spark = SparkSession.builder().config("spark.hadoop.dfs.client.use.datanode.hostname", "true").config("spark.hadoop.fs.defaultFS", "hdfs://quickstart.cloudera:8020").appName(jobName).master("local[*]").getOrCreate()
+
       val bootstrapServers = args(0)
 
 
@@ -93,8 +92,8 @@ object SparkStreamingApp {
       val query = newRdd.writeStream
         .outputMode(OutputMode.Append())
         .format("parquet")
-        .option("path", "hdfs://quickstart.cloudera:8020/user/will/")
-        .option("checkpointLocation", "hdfs://quickstart.cloudera:8020/user/will/reviews_checkpoint/")
+        .option("path", "hdfs://quickstart.cloudera:8020/user/timothyfortney/reviews")
+        .option("checkpointLocation", "hdfs://quickstart.cloudera:8020/user/timothyfortney/reviews_checkpoint")
         .trigger(Trigger.ProcessingTime("5 seconds"))
         .start()
 

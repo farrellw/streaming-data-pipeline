@@ -45,7 +45,7 @@ object SparkStreamingApp {
         .readStream
         .format("kafka")
         .option("kafka.bootstrap.servers", bootstrapServers)
-        .option("subscribe", "orders")
+        .option("subscribe", "reviews")
         .option("startingOffsets", "earliest")
         .option("maxOffsetsPerTrigger", "5")
         .option("sep", "\t")

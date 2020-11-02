@@ -106,22 +106,12 @@ object SparkStreamingApp {
   def verboseParse(ds: Dataset[String], sparkSession: SparkSession): Dataset[Review] = {
     import sparkSession.implicits._
     val split = ds.map(_.split("\t"))
-    // Filter out invalid data. Make sure every record has the appropriate number of elements and is NOT the header row.
-    val headerColumnOne = "marketplace"
-    val validRecords = split
-      .filter(_.length > 2)
-      .filter(x => {
-        val firstColumn = x(0)
-        firstColumn != headerColumnOne
-      })
 
     // Create a Review case class from the record
-    val reviews: Dataset[Review] = validRecords.map(x => {
+    val reviews: Dataset[Review] = split.map(x => {
       // Remove the trailing newline.
-      val dateAsString = x(14).stripLineEnd
-
       // Parse into a date object using Date.valueOf
-      val date = Try(Date.valueOf(dateAsString)).toOption
+      val date = Try(Date.valueOf(x(14))).toOption
 
       // Turn array into a Review case class
       Review(x(0), x(1), x(2), x(3), x(4).toInt, x(5), x(6), x(7).toInt, x(8).toInt, x(9).toInt, x(10), x(11), x(12), x(13), date)
